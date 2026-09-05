@@ -1,0 +1,89 @@
+# ~/devshop/docker-compose.prod.yaml
+
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:8
+    container_name: devshop-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devshop-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  products:
+    # 🎯 Using image from GHCR instead of building!
+    image: ghcr.io/${GITHUB_USER}/devshop-products:latest
+    container_name: devshop-products
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongodb:27017/devshop_products
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  orders:
+    image: ghcr.io/${GITHUB_USER}/devshop-orders:latest
+    container_name: devshop-orders
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongodb:27017/devshop_orders
+      - PRODUCTS_SERVICE_URL=http://products:3002
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      products:
+        condition: service_started
+
+  api-gateway:
+    image: ghcr.io/${GITHUB_USER}/devshop-api-gateway:latest
+    container_name: devshop-api-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - PRODUCTS_SERVICE_URL=http://products:3002
+      - ORDERS_SERVICE_URL=http://orders:3003
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - products
+      - orders
+      - redis
+
+  frontend:
+    image: ghcr.io/${GITHUB_USER}/devshop-frontend:latest
+    container_name: devshop-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - API_GATEWAY_URL=http://api-gateway:3001
+      - ENVIRONMENT=production
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongodb_data:
