@@ -4,10 +4,15 @@ name: DevShop CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
-
+    branches: [master, main]
+    paths:
+      - "services/**"
+      - "docker-compose*"
+      - ".github/workflows/**"
   pull_request:
-    branches: [main]
+    branches: [master, main]
+    paths:
+      - "services/**"
 
 jobs:
   test:
