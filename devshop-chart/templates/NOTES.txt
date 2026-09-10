@@ -1,0 +1,26 @@
+# ~/devshop/devshop-chart/templates/NOTES.txt
+
+╔══════════════════════════════════════════════════════╗
+║           🛒 DevShop Deployed Successfully!           ║
+╚══════════════════════════════════════════════════════╝
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+📦 Services:
+  Frontend:     {{ .Values.frontend.replicaCount }} replicas
+  API Gateway:  {{ .Values.gateway.replicaCount }} replicas
+  Products:     {{ .Values.products.replicaCount }} replicas
+  Orders:       {{ .Values.orders.replicaCount }} replicas
+  MongoDB:      {{ if .Values.mongodb.enabled }}Running{{ else }}Disabled{{ end }}
+  Redis:        {{ if .Values.redis.enabled }}Running{{ else }}Disabled{{ end }}
+
+🌐 Access your app:
+  Frontend:  http://{{ .Values.ingress.hosts.frontend }}
+  API:       http://{{ .Values.ingress.hosts.api }}
+
+🔧 Useful commands:
+  kubectl get pods -n {{ .Release.Namespace }}
+  kubectl get svc -n {{ .Release.Namespace }}
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/part-of=devshop -f
+  helm status {{ .Release.Name }} -n {{ .Release.Namespace }}

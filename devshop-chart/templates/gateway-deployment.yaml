@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "devshop.fullname" (dict "name" "gateway" "context" .) }}
+  labels:
+    {{- include "devshop.labels" . | nindent 4}}
+    app.kubernetes.io/name: gateway
+spec:
+  replicas: {{ default 1 .Values.gateway.replicaCount | int }}
+  selector:
+    matchLabels:
+      {{- include "devshop.selectorLabels" (dict "name" "gateway" "context" .) | nindent 6}}
+  template:
+    metadata:
+      labels:
+        {{- include "devshop.selectorLabels" (dict "name" "gateway" "context" .) | nindent 8}}
+    spec:
+      containers:
+      - name: gateway
+        image: {{ include "devshop.image" (dict "service" .Values.gateway "image" .Values.image) }}
+        imagePullPolicy: {{ .Values.gateway.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.gateway.service.targetPort | int }}
+          name: http
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-config
+          - secretRef:
+              name: {{ .Release.Name }}-secret
+        resources:
+            {{- toYaml .Values.gateway.resources | nindent 12 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.gateway.service.targetPort | int }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.gateway.service.targetPort | int }}
+          initialDelaySeconds: 5
+          periodSeconds: 5

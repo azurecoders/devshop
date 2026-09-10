@@ -1,0 +1,123 @@
+image:
+  registry: ghcr.io
+  namespace: azurecoders
+  tag: latest
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: devshop-frontend
+    imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    ENVIRONMENT: "production"
+
+gateway:
+  replicaCount: 2
+  image:
+    repository: devshop-api-gateway
+    imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3001
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+products:
+  replicaCount: 2
+  image:
+    repository: devshop-products
+    imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3002
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+orders:
+  replicaCount: 2
+  image:
+    repository: devshop-orders
+    imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3003
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    frontend: devshop.local
+    api: api.devshop.local
+
+mongodb:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    rootUser: admin
+    rootPassword: devshop-mongo-root-123
+    usernames:
+      - devshop
+    passwords:
+      - devshop-mongo-pass-123
+    databases:
+      - devshop_products
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: devshop-redis-pass-123
+  master:
+    persistence:
+      enabled: true
+      size: 500Mi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

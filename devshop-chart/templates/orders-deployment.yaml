@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "devshop.fullname" (dict "name" "orders" "context" .) }}
+  labels:
+    {{- include "devshop.labels" . | nindent 4}}
+    app.kubernetes.io/name: orders
+spec:
+  replicas: {{ default 1 .Values.orders.replicaCount | int }}
+  selector:
+    matchLabels:
+      {{- include "devshop.selectorLabels" (dict "name" "orders" "context" .) | nindent 6}}
+  template:
+    metadata:
+      labels:
+        {{- include "devshop.selectorLabels" (dict "name" "orders" "context" .) | nindent 8}}
+    spec:
+      containers:
+      - name: orders
+        image: {{ include "devshop.image" (dict "service" .Values.orders "image" .Values.image) }}
+        imagePullPolicy: {{ .Values.orders.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.orders.service.targetPort | int }}
+          name: http
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-config
+          - secretRef:
+              name: {{ .Release.Name }}-secret
+        resources:
+            {{- toYaml .Values.orders.resources | nindent 12 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.orders.service.targetPort | int }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.orders.service.targetPort | int }}
+          initialDelaySeconds: 5
+          periodSeconds: 5

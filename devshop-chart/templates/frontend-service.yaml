@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "devshop.fullname" (dict "name" "frontend" "context" .) }}
+  labels:
+    {{- include "devshop.labels" . | nindent 4}}
+    app.kubernetes.io/name: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+  - port: {{ .Values.frontend.service.port }}
+    targetPort: {{ .Values.frontend.service.targetPort }}
+    name: http
+  selector:
+    {{- include "devshop.selectorLabels" (dict "name" "frontend" "context" .)| nindent 4 }}

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "devshop.fullname" (dict "name" "frontend" "context" .) }}
+  labels:
+    {{- include "devshop.labels" . | nindent 4}}
+    app.kubernetes.io/name: frontend
+spec:
+  replicas: {{ default 1 .Values.frontend.replicaCount | int }}
+  selector:
+    matchLabels:
+      {{- include "devshop.selectorLabels" (dict "name" "frontend" "context" .) | nindent 6}}
+  template:
+    metadata:
+      labels:
+        {{- include "devshop.selectorLabels" (dict "name" "frontend" "context" .) | nindent 8}}
+    spec:
+      containers:
+      - name: frontend
+        image: {{ include "devshop.image" (dict "service" .Values.frontend "image" .Values.image) }}
+        imagePullPolicy: {{ .Values.frontend.image.imagePullPolicy }}
+
+        ports:
+        - containerPort: {{ .Values.frontend.service.targetPort | int }}
+          name: http
+
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-config
+        env:
+          - name: API_GATEWAY_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-config
+                key: API_GATEWAY_URL
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.frontend.service.targetPort | int }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.frontend.service.targetPort | int }}
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: devshop-chart
+description: DevShop Microservices E-Commerce Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: mongodb
+    version: "19.1.41"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled
+
+  - name: redis
+    version: "28.0.15"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
